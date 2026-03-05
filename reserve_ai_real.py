@@ -12,107 +12,104 @@ client = OpenAI(api_key=api_key)
 
 st.set_page_config(page_title="The Reserve Medical", page_icon="🩺", layout="centered")
 
-# --- CUSTOM CSS (Warm Claude Style) ---
+# --- CUSTOM CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
 
     .stApp { background-color: #FAF7F2 !important; font-family: 'Inter', sans-serif !important; color: #2C2C2C !important; }
 
+    /* Centered Hero Header */
+    .hero-container {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        height: 60vh; text-align: center;
+    }
+    
     h1 {
         font-family: 'Cormorant Garamond', serif !important;
         color: #1A1A1A !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
         letter-spacing: 2px !important;
-        font-size: 2.5rem !important;
-        text-align: center;
-        margin-bottom: 0px;
+        font-size: 3rem !important;
+        margin-bottom: 10px;
     }
     
     .subtitle {
-        font-family: 'Inter', sans-serif;
-        color: #666;
-        text-align: center;
-        font-size: 0.85rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        margin-top: -10px;
-        margin-bottom: 40px;
+        font-family: 'Inter', sans-serif; color: #666; font-size: 0.9rem;
+        text-transform: uppercase; letter-spacing: 2px; margin-bottom: 40px;
     }
 
     /* Links */
-    a { color: #C5A059 !important; text-decoration: none !important; font-weight: 500 !important; }
-    a:hover { text-decoration: underline !important; }
+    a { color: #C5A059 !important; text-decoration: none !important; font-weight: 600 !important; }
+    
+    /* Input Box (Default Bottom) */
+    .stChatInput { bottom: 40px !important; }
 
-    /* Messages */
-    .stChatMessage { background-color: transparent !important; border: none !important; }
-    div[data-testid="stChatMessage"]:nth-child(odd) { flex-direction: row-reverse; text-align: right; }
-    div[data-testid="stChatMessage"]:nth-child(odd) .stMarkdown {
-        background-color: #E8E0D4; padding: 12px 20px; border-radius: 20px;
-        display: inline-block; max-width: 80%; text-align: left;
-    }
-    div[data-testid="stChatMessage"]:nth-child(even) .stMarkdown {
-        background-color: transparent; padding: 10px 0; color: #2C2C2C;
-        font-family: 'Inter', sans-serif; line-height: 1.6; font-size: 1.05rem;
-    }
-
-    /* Input Box */
-    .stChatInput { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 700px; z-index: 999; }
+    /* Hide Branding */
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER ---
-st.markdown("<h1>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>AI-Powered Clinical Intelligence</p>", unsafe_allow_html=True)
-
-# --- SYSTEM PROMPT (With Citations) ---
+# --- SYSTEM PROMPT ---
 SYSTEM_PROMPT = """
 You are The Reserve Medical Assistant. You provide clinical intelligence, not advice.
-TONE: Professional, warm, human, and authoritative.
+TONE: Professional, warm, human, authoritative.
+FORMAT: No numbers. Bold key diagnoses.
 
 STRUCTURE:
 
-1. **Clinical Impression (Most Likely):**
-   - Discuss the most probable cause. Explain *why*.
+**Clinical Impression**
+(Discuss most likely cause. Bold the condition name.)
 
-2. **Differential Diagnosis (Less Likely):**
-   - Discuss other possibilities ("Less likely, but worth considering...").
+**Differential Diagnosis**
+(Discuss less likely causes. Bold condition names.)
 
-3. **Critical Rule-Outs (Emergent Warnings):**
-   - Mention serious conditions IF applicable.
+**Emergent Warnings**
+(Only if applicable. Serious tone.)
 
-4. **Clinical References:**
-   - Provide direct links to trusted sources (CDC, NIH, Mayo Clinic, Cleveland Clinic) for further reading.
-   - Format: "[Source Name](URL)"
+**AI Recommendation**
+(Triage level: Home Care, Appointment, Urgent Care, ER. No colored dots. Just text.)
 
-5. **AI Recommendation:**
-   - 🟢 Home Care / 🟡 Appointment / 🔴 ER.
-   - **Explicit Warning:** "Go immediately to the Emergency Room if..."
-
-SAFETY: If emergent (chest pain/stroke/airway), start with "🔴 GO TO ER IMMEDIATELY" and skip the differential.
+**References**
+(Link to trusted sources like CDC/NIH/Mayo.)
 """
 
 # --- SESSION STATE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- CHAT DISPLAY ---
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+# --- HERO VS CHAT MODE ---
+if not st.session_state.messages:
+    # HERO MODE (Centered)
+    st.markdown('<div class="hero-container">', unsafe_allow_html=True)
+    st.markdown("<h1>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
+    st.markdown("<p class='subtitle'>AI-Powered Clinical Intelligence</p>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+else:
+    # CHAT MODE (Top Header)
+    st.markdown("<h1 style='font-size: 1.5rem !important; margin-top: 20px;'>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
+    
+    # Display History
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
 # --- INPUT AREA ---
-if prompt := st.chat_input("Consult The Reserve..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+prompt_placeholder = "Describe your symptoms..." if not st.session_state.messages else "Message..."
 
+if prompt := st.chat_input(prompt_placeholder):
+    # Add User Message
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    # Force Rerun to switch from Hero to Chat layout immediately
+    st.rerun()
+
+# --- AI RESPONSE LOGIC (After Rerun) ---
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
+        
         messages_api = [{"role": "system", "content": SYSTEM_PROMPT}] + [
             {"role": m["role"], "content": m["content"]} for m in st.session_state.messages
         ]
