@@ -13,111 +13,129 @@ client = OpenAI(api_key=api_key)
 st.set_page_config(page_title="The Reserve Medical", page_icon="🩺", layout="centered")
 
 # --- THEME COLORS ---
-NAVY_BLUE = "#012161"
-CREAM_BG = "#F5F5F0"
-WHITE_CARD = "#FFFFFF"
-TEXT_DARK = "#333333"
+NAVY = "#012161"
+GOLD = "#C5A059"
+CREAM_BG = "#FAFAF9"
+TEXT_DARK = "#1A1A1A"
 
-# --- CUSTOM CSS (Luxury Navy Theme) ---
+# --- CUSTOM CSS (Ultra-Luxury) ---
 st.markdown(f"""
 <style>
-    /* Import Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+Pro:wght@400;600&display=swap');
+    /* Import Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Jost:wght@300;400;500&display=swap');
 
-    /* Global App Background */
+    /* App Background */
     .stApp {{
-        background: linear-gradient(135deg, #E0E0E0 0%, #F5F5F0 100%);
-        font-family: 'Source Sans Pro', sans-serif;
+        background-color: {CREAM_BG};
+        font-family: 'Jost', sans-serif;
         color: {TEXT_DARK};
     }}
 
-    /* Headers (Luxury Serif) */
-    h1, h2, h3 {{
-        font-family: 'Playfair Display', serif;
-        color: {NAVY_BLUE};
+    /* Headers (Cormorant Garamond) */
+    h1 {{
+        font-family: 'Cormorant Garamond', serif;
+        color: {NAVY};
         text-align: center;
+        font-size: 3rem !important;
+        font-weight: 700;
+        margin-bottom: 0px;
     }}
     
-    /* Subtitle Styling */
     .subtitle {{
-        font-family: 'Source Sans Pro', sans-serif;
-        color: #666;
+        font-family: 'Jost', sans-serif;
+        color: {GOLD};
         text-align: center;
-        letter-spacing: 2px;
+        letter-spacing: 4px;
         text-transform: uppercase;
-        font-size: 0.9em;
-        margin-top: -15px;
-        margin-bottom: 30px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-top: -10px;
+        margin-bottom: 40px;
     }}
 
-    /* Chat Container (Card Effect) */
+    /* Chat Container */
     .chat-container {{
-        max-width: 600px;
+        max-width: 650px;
         margin: auto;
-        padding: 20px;
+        padding: 0 10px;
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 25px; /* More breathing room */
     }}
 
-    /* User Message (Navy Blue) */
+    /* User Message (Minimalist Block) */
     .user-msg {{
-        background-color: {NAVY_BLUE};
+        background-color: {NAVY};
         color: white;
-        padding: 14px 20px;
-        border-radius: 20px 20px 0 20px;
+        padding: 15px 25px;
+        border-radius: 4px; /* Sharp corners = Expensive */
         align-self: flex-end;
-        max-width: 85%;
-        box-shadow: 0 4px 10px rgba(1, 33, 97, 0.2);
-        font-size: 16px;
-        margin-left: auto; /* Force right */
-        margin-bottom: 10px;
+        max-width: 80%;
+        font-family: 'Jost', sans-serif;
+        font-weight: 400;
+        box-shadow: 0 4px 15px rgba(1, 33, 97, 0.15);
+        border-bottom: 2px solid {GOLD}; /* Gold detail */
+        margin-left: auto;
     }}
 
-    /* AI Message (Clean White Card) */
+    /* AI Message (The "Medical Report" Card) */
     .ai-msg {{
-        background-color: {WHITE_CARD};
+        background-color: white;
         color: {TEXT_DARK};
-        padding: 18px 25px;
-        border-radius: 20px 20px 20px 0;
+        padding: 30px;
+        border-radius: 2px;
         align-self: flex-start;
-        max-width: 90%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        border-left: 5px solid {NAVY_BLUE};
-        font-size: 16px;
-        line-height: 1.6;
-        margin-right: auto; /* Force left */
-        margin-bottom: 10px;
+        width: 100%; /* Full width for authority */
+        box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+        border-top: 3px solid {GOLD}; /* Top Gold Line */
+        font-family: 'Jost', sans-serif;
+        font-size: 1.05rem;
+        line-height: 1.7;
+        margin-right: auto;
     }}
 
-    /* Input Field Styling */
-    div[data-testid="stForm"] {{
-        border: none;
-        box-shadow: none;
-        background: transparent;
+    /* Markdown Styling inside AI Card */
+    .ai-msg strong {{
+        color: {NAVY};
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.2rem;
+        font-weight: 700;
     }}
-    
+
+    /* Input Field (Clean Line) */
     .stTextInput > div > div > input {{
-        border-radius: 30px;
-        padding: 10px 20px;
-        border: 1px solid #ccc;
+        background-color: transparent;
+        border: none;
+        border-bottom: 2px solid {NAVY};
+        border-radius: 0;
+        padding: 10px 5px;
+        color: {NAVY};
+        font-family: 'Jost', sans-serif;
+        font-size: 1rem;
+    }}
+    .stTextInput > div > div > input:focus {{
+        border-bottom: 2px solid {GOLD};
+        box-shadow: none;
     }}
 
-    /* Button Styling */
+    /* Button (Gold Luxury) */
     .stButton > button {{
-        background-color: {NAVY_BLUE};
-        color: white;
-        border-radius: 30px;
-        padding: 10px 30px;
-        font-weight: 600;
-        border: none;
-        width: 100%;
+        background-color: {NAVY};
+        color: {GOLD};
+        border: 1px solid {NAVY};
+        border-radius: 0;
+        padding: 12px 40px;
+        font-family: 'Jost', sans-serif;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 2px;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+        width: 100%;
     }}
     .stButton > button:hover {{
-        background-color: #011a4d;
-        color: white;
+        background-color: {GOLD};
+        color: {NAVY};
+        border-color: {GOLD};
     }}
 
     /* Hide Streamlit Branding */
@@ -147,11 +165,10 @@ TONE: Professional, empathetic, concise.
 SAFETY: If the user mentions chest pain, severe bleeding, or difficulty breathing, START with "🔴 GO TO ER IMMEDIATELY".
 """
 
-# --- SESSION STATE ---
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-# --- CHAT HISTORY ---
+# --- CHAT DISPLAY ---
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 for msg in st.session_state.messages:
     if msg["role"] != "system":
@@ -161,8 +178,8 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # --- INPUT AREA ---
 with st.form(key='chat_form', clear_on_submit=True):
-    user_input = st.text_input("Describe your symptoms...", key="input")
-    submit_button = st.form_submit_button(label='Consult AI')
+    user_input = st.text_input("Consult with The Reserve AI...", key="input")
+    submit_button = st.form_submit_button(label='Submit Inquiry')
 
 if submit_button and user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -177,4 +194,4 @@ if submit_button and user_input:
     except Exception as e:
         st.error(f"Error: {e}")
 
-st.markdown('<p style="text-align: center; font-size: 0.8em; color: #888; margin-top: 30px;">⚠️ Educational use only. Consult a physician for medical advice.</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; font-size: 0.7em; color: #aaa; margin-top: 40px; font-family: Jost;">THE RESERVE MEDICAL &copy; 2026</p>', unsafe_allow_html=True)
