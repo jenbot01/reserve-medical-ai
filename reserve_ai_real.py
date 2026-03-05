@@ -13,117 +13,122 @@ client = OpenAI(api_key=api_key)
 
 st.set_page_config(page_title="The Reserve Medical", page_icon="🩺", layout="centered")
 
-# --- THEME COLORS (Claude Dark Mode) ---
-BG_COLOR = "#1A1A1A"        # Deep Charcoal
-USER_BUBBLE = "#2E2E2E"     # Soft Dark Grey
-TEXT_COLOR = "#E5E5E5"      # Muted White
-ACCENT_COLOR = "#D9D9D9"    # Subtle Accent
-INPUT_BG = "#2E2E2E"        # Input Field Background
-
-# --- CUSTOM CSS (Minimalist Dark) ---
-st.markdown(f"""
+# --- CUSTOM CSS (Warm Claude Style) ---
+st.markdown("""
 <style>
-    /* Import Inter Font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    /* Import Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
 
-    /* Global App Background */
-    .stApp {{
-        background-color: {BG_COLOR};
-        font-family: 'Inter', sans-serif;
-        color: {TEXT_COLOR};
-    }}
+    /* Global Background */
+    .stApp {
+        background-color: #FAF7F2 !important;
+        font-family: 'Inter', sans-serif !important;
+        color: #2C2C2C !important;
+    }
 
-    /* Headers */
-    h1 {{
-        font-family: 'Inter', sans-serif;
-        font-weight: 600;
-        color: {TEXT_COLOR};
-        text-align: center;
-        font-size: 1.5rem;
-        margin-bottom: 5px;
+    /* Headers (Force Cormorant Garamond) */
+    h1, h2, h3 {
+        font-family: 'Cormorant Garamond', serif !important;
+        color: #1A1A1A !important;
+        font-weight: 700 !important;
         letter-spacing: -0.5px;
-    }}
+    }
+
+    /* Chat Messages Container */
+    .stChatMessage {
+        background-color: transparent !important;
+        border: none !important;
+    }
+
+    /* User Message (Beige Pill) */
+    div[data-testid="stChatMessage"]:nth-child(odd) {
+        flex-direction: row-reverse;
+        text-align: right;
+        background-color: transparent;
+    }
     
-    .subtitle {{
-        font-family: 'Inter', sans-serif;
-        color: #888;
-        text-align: center;
-        font-size: 0.9rem;
-        font-weight: 400;
-        margin-bottom: 40px;
-    }}
-
-    /* Chat Container */
-    .chat-container {{
-        max-width: 700px;
-        margin: auto;
-        padding-bottom: 100px; /* Space for input */
-    }}
-
-    /* User Message (Rounded Pill) */
-    .user-msg {{
-        background-color: {USER_BUBBLE};
-        color: {TEXT_COLOR};
+    div[data-testid="stChatMessage"]:nth-child(odd) .stMarkdown {
+        background-color: #E8E0D4;
+        color: #2C2C2C;
         padding: 12px 20px;
         border-radius: 20px;
-        align-self: flex-end;
-        max-width: 80%;
-        font-size: 1rem;
-        line-height: 1.5;
-        margin-left: auto;
-        margin-bottom: 20px;
         display: inline-block;
-        float: right;
-        clear: both;
-    }}
+        max-width: 80%;
+        text-align: left; /* Keep text readable */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
 
-    /* AI Message (Clean Text, No Bubble) */
-    .ai-msg {{
+    /* AI Message (Clean Text) */
+    div[data-testid="stChatMessage"]:nth-child(even) {
         background-color: transparent;
-        color: {TEXT_COLOR};
-        padding: 10px 0;
-        align-self: flex-start;
-        max-width: 100%;
-        font-size: 1rem;
-        line-height: 1.6;
-        margin-right: auto;
-        margin-bottom: 30px;
-        float: left;
-        clear: both;
-        width: 100%;
-    }}
+    }
     
-    /* Markdown Headers in AI Text */
-    .ai-msg strong {{
-        color: white;
-        font-weight: 600;
-    }}
-
-    /* Input Bar (Fixed Bottom) */
-    .stTextInput > div > div > input {{
-        background-color: {INPUT_BG};
-        color: {TEXT_COLOR};
-        border: 1px solid #444;
-        border-radius: 12px;
-        padding: 12px 15px;
+    div[data-testid="stChatMessage"]:nth-child(even) .stMarkdown {
+        background-color: transparent;
+        padding: 10px 0;
+        color: #2C2C2C;
         font-family: 'Inter', sans-serif;
-    }}
-    .stTextInput > div > div > input:focus {{
-        border-color: #666;
-        box-shadow: none;
-    }}
+        line-height: 1.6;
+        font-size: 1.05rem;
+    }
+
+    /* Input Box Styling (Floating Card) */
+    .stChatInput {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 700px;
+        z-index: 999;
+    }
+    
+    .stChatInputContainer {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E0E0E0 !important;
+        border-radius: 24px !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+        padding: 5px 10px !important;
+    }
+    
+    .stChatInput textarea {
+        background-color: transparent !important;
+        color: #2C2C2C !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+
+    /* EKG Animation (Heartbeat) */
+    @keyframes heartbeat {
+        0% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.5; }
+    }
+    .ekg-loader {
+        width: 10px;
+        height: 10px;
+        background-color: #C5A059; /* Gold Dot */
+        border-radius: 50%;
+        margin: 10px 0;
+        animation: heartbeat 1s infinite;
+        display: inline-block;
+    }
+
+    /* Hide Default Avatars */
+    .stChatMessageAvatar {
+        display: none !important;
+    }
     
     /* Hide Streamlit Branding */
-    #MainMenu {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
-    header {{visibility: hidden;}}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     
 </style>
 """, unsafe_allow_html=True)
 
 # --- HEADER ---
-st.markdown("<h1>The Reserve Medical</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>AI Healthcare Assistant</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; margin-top: 40px;'>The Reserve Medical</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-family: Inter; color: #888; margin-bottom: 60px;'>AI Healthcare Assistant</p>", unsafe_allow_html=True)
 
 # --- SYSTEM PROMPT ---
 SYSTEM_PROMPT = """
@@ -142,57 +147,56 @@ SAFETY: If the user mentions chest pain, severe bleeding, or difficulty breathin
 
 # --- SESSION STATE ---
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    st.session_state.messages = []
 
 # --- CHAT DISPLAY ---
 for msg in st.session_state.messages:
-    if msg["role"] != "system":
-        if msg["role"] == "user":
-            st.markdown(f'<div class="user-msg">{msg["content"]}</div>', unsafe_allow_html=True)
-        else:
-            # AI Message (Clean Text)
-            st.markdown(f'<div class="ai-msg">{msg["content"]}</div>', unsafe_allow_html=True)
+    role = msg["role"]
+    with st.chat_message(role):
+        st.markdown(msg["content"])
 
 # --- INPUT AREA ---
-# Create a placeholder for the stream
-stream_placeholder = st.empty()
-
 if prompt := st.chat_input("Message The Reserve Medical..."):
-    # 1. Add User Message
+    # User Message
     st.session_state.messages.append({"role": "user", "content": prompt})
-    st.markdown(f'<div class="user-msg">{prompt}</div>', unsafe_allow_html=True)
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-    # 2. STREAM AI RESPONSE
-    full_response = ""
+    # AI Response with Streaming & EKG
     with st.chat_message("assistant"):
-        message_placeholder = st.empty()
+        # EKG Loader
+        loader_placeholder = st.empty()
+        loader_placeholder.markdown('<div class="ekg-loader"></div> <span style="font-family:Inter; color:#888; font-size:0.8em;">Analyzing...</span>', unsafe_allow_html=True)
         
-        # Call OpenAI with STREAM=TRUE
+        # Artificial "Thinking" Pause (to show off the EKG)
+        time.sleep(1.5)
+        
+        # Clear loader
+        loader_placeholder.empty()
+        
+        # Stream Response
+        message_placeholder = st.empty()
+        full_response = ""
+        
+        # Build Context (System Prompt + History)
+        messages_api = [{"role": "system", "content": SYSTEM_PROMPT}] + [
+            {"role": m["role"], "content": m["content"]} for m in st.session_state.messages
+        ]
+        
         try:
             stream = client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[
-                    {"role": m["role"], "content": m["content"]}
-                    for m in st.session_state.messages
-                ],
+                messages=messages_api,
                 stream=True,
             )
             
-            # Process the stream chunk by chunk
             for chunk in stream:
                 if chunk.choices[0].delta.content is not None:
                     full_response += chunk.choices[0].delta.content
-                    # Typewriter Effect
                     message_placeholder.markdown(full_response + "▌")
             
-            # Finalize (remove cursor)
             message_placeholder.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
             st.error(f"Error: {e}")
-
-    # 3. Save to History
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
-    
-    # Rerun to clear input box cleanly (optional, but st.chat_input handles it mostly)
-    # st.rerun()
