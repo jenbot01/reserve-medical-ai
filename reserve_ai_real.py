@@ -26,9 +26,10 @@ st.markdown("""
     div[data-testid="stChatMessage"] {
         padding: 1rem 0;
         background-color: transparent !important;
+        border: none !important;
     }
 
-    /* User (Right) */
+    /* User (Right Bubble) */
     div[data-testid="stChatMessage"]:nth-child(odd) {
         flex-direction: row-reverse;
         text-align: right;
@@ -40,10 +41,14 @@ st.markdown("""
         padding: 10px 18px;
         border-radius: 18px 18px 0 18px;
         max-width: 80%;
-        text-align: left;
+        text-align: left; /* Keep text readable inside bubble */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
 
-    /* AI (Left) */
+    /* AI (Left Text) */
+    div[data-testid="stChatMessage"]:nth-child(even) {
+        text-align: left;
+    }
     div[data-testid="stChatMessage"]:nth-child(even) > div:first-child {
         margin-right: auto;
         margin-left: 0;
@@ -52,7 +57,16 @@ st.markdown("""
         max-width: 90%;
         text-align: left;
     }
-
+    
+    /* Input Box (Bubble Style) */
+    .stChatInputContainer {
+        border-radius: 25px !important;
+        border: 1px solid #ddd !important;
+        padding: 5px 10px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
+        background-color: white !important;
+    }
+    
     /* Hide Branding */
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
 </style>
@@ -67,23 +81,54 @@ FORMAT: No numbers. Bold the **Condition Name** only.
 STRUCTURE:
 
 **Clinical Impression**
-(Discuss most likely cause.)
+(Most likely cause.)
 
 **Differential Diagnosis**
-(Discuss less likely causes.)
+(Less likely causes.)
 
 **Emergent Warnings**
-(Only if applicable.)
+(If applicable.)
 
 **AI Recommendation**
-(Triage level: Home Care, Appointment, Urgent Care, ER. Text only.)
+(Triage level.)
 
 **References**
-(Link to trusted sources.)
+(Links.)
 """
 
+# --- SESSION STATE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+# --- HERO MODE (Center) vs CHAT MODE (Top) ---
+if not st.session_state.messages:
+    # HERO: Force Header to Center
+    st.markdown("""
+    <style>
+        .hero-container {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 60vh; text-align: center;
+        }
+        /* Move Input to Center (Hack) */
+        .stChatInput { bottom: 50% !important; transform: translateY(50%) translateX(-50%) !important; }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="hero-container">', unsafe_allow_html=True)
+    st.markdown("<h1 style='font-family: Cormorant Garamond; font-size: 3rem; margin-bottom: 0;'>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='font-family: Inter; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; color: #666;'>AI-Powered Clinical Intelligence</p>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+else:
+    # CHAT: Header at Top
+    st.markdown("<h1 style='font-family: Cormorant Garamond; font-size: 1.5rem; text-align: center; margin-top: 10px; margin-bottom: 20px;'>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
+    
+    # Reset Input to Bottom
+    st.markdown("""
+    <style>
+        .stChatInput { bottom: 30px !important; transform: translateX(-50%) !important; }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- CHAT DISPLAY ---
 for msg in st.session_state.messages:
@@ -91,11 +136,14 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # --- INPUT AREA ---
-if prompt := st.chat_input("Message..."):
+if prompt := st.chat_input("Consult The Reserve..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    
+    # RERUN TO SWITCH LAYOUT IMMEDIATELY
+    st.rerun()
 
+# --- AI RESPONSE GENERATION (After Rerun) ---
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
