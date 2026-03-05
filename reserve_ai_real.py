@@ -12,59 +12,59 @@ client = OpenAI(api_key=api_key)
 
 st.set_page_config(page_title="The Reserve Medical", page_icon="🩺", layout="centered")
 
-# --- CSS (Nuclear Option) ---
+# --- CUSTOM CSS (Minimal & Stable) ---
 st.markdown("""
 <style>
+    /* Font Imports */
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
 
-    .stApp { background-color: #FAF7F2 !important; font-family: 'Inter', sans-serif !important; color: #2C2C2C !important; }
-
-    /* Hide Streamlit Cruft */
-    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
-    .stDeployButton {display:none;}
+    /* Global Reset */
+    .stApp { background-color: #FAF7F2; font-family: 'Inter', sans-serif; color: #2C2C2C; }
     
-    /* Header (Center) */
-    .header-center {
-        text-align: center; margin-top: 20px;
-    }
-    .header-center h1 {
-        font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; color: #1A1A1A; margin-bottom: 5px;
-    }
-    .header-center p {
-        font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #666; letter-spacing: 2px; text-transform: uppercase;
+    /* Header Styling */
+    h1 { font-family: 'Cormorant Garamond', serif; color: #1A1A1A; text-align: center; font-weight: 700; }
+    
+    /* Hide Avatars & Streamlit Branding */
+    .stChatMessageAvatar { display: none !important; }
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
+
+    /* MESSAGE ALIGNMENT (The Critical Part) */
+    div[data-testid="stChatMessage"] {
+        padding: 1rem 0;
+        background-color: transparent;
+        border: none;
     }
 
-    /* Message Container */
-    .chat-container {
-        display: flex; flex-direction: column; gap: 20px; margin-bottom: 100px;
+    /* USER: Right Aligned Bubble */
+    div[data-testid="stChatMessage"]:nth-child(odd) {
+        flex-direction: row-reverse;
+        text-align: right;
     }
-
-    /* User Bubble (Right) */
-    .user-msg {
-        align-self: flex-end;
+    div[data-testid="stChatMessage"]:nth-child(odd) > div:first-child {
         background-color: #E8E0D4;
         color: #2C2C2C;
-        padding: 12px 20px;
-        border-radius: 20px 20px 0 20px;
+        padding: 10px 18px;
+        border-radius: 18px 18px 0 18px;
+        text-align: left;
+        display: inline-block;
         max-width: 80%;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        margin-left: auto; /* Force Right */
     }
 
-    /* AI Text (Left) */
-    .ai-msg {
-        align-self: flex-start;
+    /* AI: Left Aligned Text */
+    div[data-testid="stChatMessage"]:nth-child(even) {
+        flex-direction: row;
+        text-align: left;
+    }
+    div[data-testid="stChatMessage"]:nth-child(even) > div:first-child {
         background-color: transparent;
-        color: #2C2C2C;
         padding: 0;
         max-width: 90%;
-        font-size: 1rem;
-        line-height: 1.6;
-        margin-right: auto; /* Force Left */
     }
-
-    /* Input Box (Fixed Bottom) */
-    .stChatInput { bottom: 30px !important; }
+    
+    /* Center Input on Home Page */
+    .hero-container {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh;
+    }
 
 </style>
 """, unsafe_allow_html=True)
@@ -73,7 +73,7 @@ st.markdown("""
 SYSTEM_PROMPT = """
 You are The Reserve Medical Assistant.
 TONE: Professional, warm, authoritative.
-FORMAT: No numbers. Bold the **Condition Name** only.
+FORMAT: Bold the **Condition Name** only. No numbers.
 
 STRUCTURE:
 **Clinical Impression**
@@ -96,73 +96,56 @@ STRUCTURE:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- RENDER MESSAGES (Raw HTML) ---
-if st.session_state.messages:
-    # Small Header (Top)
-    st.markdown("""
-    <div class="header-center" style="margin-top: 0; margin-bottom: 30px;">
-        <h1 style="font-size: 1.5rem;">THE RESERVE MEDICAL</h1>
-    </div>
-    """, unsafe_allow_html=True)
+# --- PAGE LAYOUT LOGIC ---
+if not st.session_state.messages:
+    # --- HOME PAGE (Centered) ---
+    st.markdown('<div class="hero-container">', unsafe_allow_html=True)
+    st.markdown("<h1>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #666; letter-spacing: 2px; text-transform: uppercase; font-size: 0.9rem;'>AI-Powered Clinical Intelligence</p>", unsafe_allow_html=True)
     
-    # Chat History
-    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-    for msg in st.session_state.messages:
-        role_class = "user-msg" if msg["role"] == "user" else "ai-msg"
-        st.markdown(f'<div class="{role_class}">{msg["content"]}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-else:
-    # HERO MODE (Center)
-    st.markdown("""
-    <div style="height: 20vh;"></div>
-    <div class="header-center">
-        <h1>THE RESERVE MEDICAL</h1>
-        <p>AI-Powered Clinical Intelligence</p>
-    </div>
-    <div style="height: 40px;"></div>
-    """, unsafe_allow_html=True)
-    
-    # Input in Center (Using Form)
+    # Simple Centered Input
     with st.form("hero_form"):
-        user_input = st.text_input("Describe your symptoms...", key="hero_input", label_visibility="collapsed")
+        user_input = st.text_input("Describe your symptoms...", placeholder="Consult The Reserve Medical AI...", label_visibility="collapsed")
         submitted = st.form_submit_button("Start Consultation", use_container_width=True)
         if submitted and user_input:
             st.session_state.messages.append({"role": "user", "content": user_input})
             st.rerun()
+            
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# --- BOTTOM INPUT (Only show if chatting) ---
-if st.session_state.messages:
+else:
+    # --- CHAT PAGE (Top Header + Bottom Input) ---
+    st.markdown("<h1 style='font-size: 1.8rem; margin-top: 20px;'>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
+    
+    # Display History
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            
+    # Bottom Input
     if prompt := st.chat_input("Continue consultation..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.rerun()
 
-# --- GENERATE RESPONSE (After Rerun) ---
-if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-    # Stream Response (Using Placeholder)
-    message_placeholder = st.empty()
-    full_response = ""
-    
-    messages_api = [{"role": "system", "content": SYSTEM_PROMPT}] + [
-        {"role": m["role"], "content": m["content"]} for m in st.session_state.messages
-    ]
-    
-    try:
-        stream = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=messages_api,
-            stream=True,
-        )
-        for chunk in stream:
-            if chunk.choices[0].delta.content is not None:
-                full_response += chunk.choices[0].delta.content
-                # Update Placeholder with HTML (To keep styling consistent)
-                # Note: Streaming HTML is tricky, so we stream text inside a styled div
-                message_placeholder.markdown(f'<div class="ai-msg">{full_response}▌</div>', unsafe_allow_html=True)
-        
-        # Finalize
-        message_placeholder.markdown(f'<div class="ai-msg">{full_response}</div>', unsafe_allow_html=True)
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
-        
-    except Exception as e:
-        st.error(f"Error: {e}")
+    # Generate Response
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            full_response = ""
+            messages_api = [{"role": "system", "content": SYSTEM_PROMPT}] + [
+                {"role": m["role"], "content": m["content"]} for m in st.session_state.messages
+            ]
+            try:
+                stream = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages_api,
+                    stream=True,
+                )
+                for chunk in stream:
+                    if chunk.choices[0].delta.content is not None:
+                        full_response += chunk.choices[0].delta.content
+                        message_placeholder.markdown(full_response + "▌")
+                message_placeholder.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            except Exception as e:
+                st.error(f"Error: {e}")
