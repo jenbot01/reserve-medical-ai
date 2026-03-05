@@ -19,32 +19,39 @@ st.markdown("""
 
     .stApp { background-color: #FAF7F2 !important; font-family: 'Inter', sans-serif !important; color: #2C2C2C !important; }
 
-    /* Centered Hero Header */
-    .hero-container {
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        height: 60vh; text-align: center;
-    }
-    
-    h1 {
-        font-family: 'Cormorant Garamond', serif !important;
-        color: #1A1A1A !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 2px !important;
-        font-size: 3rem !important;
-        margin-bottom: 10px;
-    }
-    
-    .subtitle {
-        font-family: 'Inter', sans-serif; color: #666; font-size: 0.9rem;
-        text-transform: uppercase; letter-spacing: 2px; margin-bottom: 40px;
+    /* Remove Avatars */
+    .stChatMessageAvatar { display: none !important; }
+
+    /* Message Alignment */
+    div[data-testid="stChatMessage"] {
+        padding: 1rem 0;
+        background-color: transparent !important;
     }
 
-    /* Links */
-    a { color: #C5A059 !important; text-decoration: none !important; font-weight: 600 !important; }
-    
-    /* Input Box (Default Bottom) */
-    .stChatInput { bottom: 40px !important; }
+    /* User (Right) */
+    div[data-testid="stChatMessage"]:nth-child(odd) {
+        flex-direction: row-reverse;
+        text-align: right;
+    }
+    div[data-testid="stChatMessage"]:nth-child(odd) > div:first-child {
+        margin-left: auto;
+        margin-right: 0;
+        background-color: #E8E0D4;
+        padding: 10px 18px;
+        border-radius: 18px 18px 0 18px;
+        max-width: 80%;
+        text-align: left;
+    }
+
+    /* AI (Left) */
+    div[data-testid="stChatMessage"]:nth-child(even) > div:first-child {
+        margin-right: auto;
+        margin-left: 0;
+        background-color: transparent;
+        padding: 0;
+        max-width: 90%;
+        text-align: left;
+    }
 
     /* Hide Branding */
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
@@ -53,59 +60,42 @@ st.markdown("""
 
 # --- SYSTEM PROMPT ---
 SYSTEM_PROMPT = """
-You are The Reserve Medical Assistant. You provide clinical intelligence, not advice.
-TONE: Professional, warm, human, authoritative.
-FORMAT: No numbers. Bold key diagnoses.
+You are The Reserve Medical Assistant.
+TONE: Professional, warm, authoritative.
+FORMAT: No numbers. Bold the **Condition Name** only.
 
 STRUCTURE:
 
 **Clinical Impression**
-(Discuss most likely cause. Bold the condition name.)
+(Discuss most likely cause.)
 
 **Differential Diagnosis**
-(Discuss less likely causes. Bold condition names.)
+(Discuss less likely causes.)
 
 **Emergent Warnings**
-(Only if applicable. Serious tone.)
+(Only if applicable.)
 
 **AI Recommendation**
-(Triage level: Home Care, Appointment, Urgent Care, ER. No colored dots. Just text.)
+(Triage level: Home Care, Appointment, Urgent Care, ER. Text only.)
 
 **References**
-(Link to trusted sources like CDC/NIH/Mayo.)
+(Link to trusted sources.)
 """
 
-# --- SESSION STATE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- HERO VS CHAT MODE ---
-if not st.session_state.messages:
-    # HERO MODE (Centered)
-    st.markdown('<div class="hero-container">', unsafe_allow_html=True)
-    st.markdown("<h1>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitle'>AI-Powered Clinical Intelligence</p>", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-else:
-    # CHAT MODE (Top Header)
-    st.markdown("<h1 style='font-size: 1.5rem !important; margin-top: 20px;'>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
-    
-    # Display History
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+# --- CHAT DISPLAY ---
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
 # --- INPUT AREA ---
-prompt_placeholder = "Describe your symptoms..." if not st.session_state.messages else "Message..."
-
-if prompt := st.chat_input(prompt_placeholder):
-    # Add User Message
+if prompt := st.chat_input("Message..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    # Force Rerun to switch from Hero to Chat layout immediately
-    st.rerun()
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-# --- AI RESPONSE LOGIC (After Rerun) ---
-if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
