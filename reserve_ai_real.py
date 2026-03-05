@@ -10,33 +10,47 @@ if not api_key:
 
 client = OpenAI(api_key=api_key)
 
-st.set_page_config(page_title="Reserve Medical", page_icon="🩺", layout="centered")
+st.set_page_config(page_title="The Reserve Medical", page_icon="🩺", layout="centered")
 
 # --- THEME COLORS ---
-BG_COLOR = "#D1C7BD"       # Warm Beige
-TEXT_COLOR = "#322d29"     # Deep Charcoal
-ACCENT_COLOR = "#72383D"   # Burgundy
-USER_BUBBLE = "#72383D"    # Burgundy (User)
-AI_BUBBLE = "#EFE9E1"      # Light Cream (AI)
+NAVY_BLUE = "#012161"
+CREAM_BG = "#F5F5F0"
+WHITE_CARD = "#FFFFFF"
+TEXT_DARK = "#333333"
 
-# --- CUSTOM CSS (Luxurious & Readable) ---
+# --- CUSTOM CSS (Luxury Navy Theme) ---
 st.markdown(f"""
 <style>
-    /* Global Background */
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+Pro:wght@400;600&display=swap');
+
+    /* Global App Background */
     .stApp {{
-        background-color: {BG_COLOR};
-        color: {TEXT_COLOR};
-        font-family: 'Helvetica Neue', sans-serif;
+        background: linear-gradient(135deg, #E0E0E0 0%, #F5F5F0 100%);
+        font-family: 'Source Sans Pro', sans-serif;
+        color: {TEXT_DARK};
     }}
-    
-    /* Headers (Serif for Luxury) */
+
+    /* Headers (Luxury Serif) */
     h1, h2, h3 {{
-        font-family: 'Georgia', serif;
-        color: {TEXT_COLOR};
-        font-weight: normal;
+        font-family: 'Playfair Display', serif;
+        color: {NAVY_BLUE};
+        text-align: center;
     }}
     
-    /* Chat Container */
+    /* Subtitle Styling */
+    .subtitle {{
+        font-family: 'Source Sans Pro', sans-serif;
+        color: #666;
+        text-align: center;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-size: 0.9em;
+        margin-top: -15px;
+        margin-bottom: 30px;
+    }}
+
+    /* Chat Container (Card Effect) */
     .chat-container {{
         max-width: 600px;
         margin: auto;
@@ -45,66 +59,78 @@ st.markdown(f"""
         flex-direction: column;
         gap: 15px;
     }}
-    
-    /* User Message Bubble */
+
+    /* User Message (Navy Blue) */
     .user-msg {{
-        background-color: {USER_BUBBLE};
+        background-color: {NAVY_BLUE};
         color: white;
-        padding: 12px 18px;
-        border-radius: 18px 18px 0 18px;
+        padding: 14px 20px;
+        border-radius: 20px 20px 0 20px;
         align-self: flex-end;
         max-width: 85%;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 10px rgba(1, 33, 97, 0.2);
         font-size: 16px;
-        line-height: 1.5;
-        margin-left: auto; /* Force right align */
+        margin-left: auto; /* Force right */
         margin-bottom: 10px;
     }}
-    
-    /* AI Message Bubble */
+
+    /* AI Message (Clean White Card) */
     .ai-msg {{
-        background-color: {AI_BUBBLE};
-        color: {TEXT_COLOR};
-        padding: 15px 20px;
-        border-radius: 18px 18px 18px 0;
+        background-color: {WHITE_CARD};
+        color: {TEXT_DARK};
+        padding: 18px 25px;
+        border-radius: 20px 20px 20px 0;
         align-self: flex-start;
         max-width: 90%;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border-left: 5px solid {NAVY_BLUE};
         font-size: 16px;
         line-height: 1.6;
-        border-left: 4px solid {ACCENT_COLOR}; /* Premium accent line */
-        margin-right: auto; /* Force left align */
+        margin-right: auto; /* Force left */
         margin-bottom: 10px;
     }}
-    
+
     /* Input Field Styling */
-    .stTextInput > div > div > input {{
-        background-color: #EFE9E1;
-        color: {TEXT_COLOR};
-        border: 1px solid {ACCENT_COLOR};
-        border-radius: 10px;
+    div[data-testid="stForm"] {{
+        border: none;
+        box-shadow: none;
+        background: transparent;
     }}
     
+    .stTextInput > div > div > input {{
+        border-radius: 30px;
+        padding: 10px 20px;
+        border: 1px solid #ccc;
+    }}
+
     /* Button Styling */
     .stButton > button {{
-        background-color: {ACCENT_COLOR};
+        background-color: {NAVY_BLUE};
         color: white;
-        border-radius: 10px;
+        border-radius: 30px;
+        padding: 10px 30px;
+        font-weight: 600;
         border: none;
-        padding: 10px 20px;
-        font-weight: bold;
+        width: 100%;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }}
-    
+    .stButton > button:hover {{
+        background-color: #011a4d;
+        color: white;
+    }}
+
     /* Hide Streamlit Branding */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
     
 </style>
 """, unsafe_allow_html=True)
 
 # --- HEADER ---
-st.markdown("<h1 style='text-align: center;'>The Reserve Medical</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-style: italic; color: #555;'>Private. Premium. Personal.</p>", unsafe_allow_html=True)
+st.markdown("<h1>The Reserve Medical</h1>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'>AI Healthcare</p>", unsafe_allow_html=True)
 
 # --- SYSTEM PROMPT ---
 SYSTEM_PROMPT = """
@@ -121,10 +147,11 @@ TONE: Professional, empathetic, concise.
 SAFETY: If the user mentions chest pain, severe bleeding, or difficulty breathing, START with "🔴 GO TO ER IMMEDIATELY".
 """
 
+# --- SESSION STATE ---
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-# --- CHAT DISPLAY ---
+# --- CHAT HISTORY ---
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 for msg in st.session_state.messages:
     if msg["role"] != "system":
@@ -150,4 +177,4 @@ if submit_button and user_input:
     except Exception as e:
         st.error(f"Error: {e}")
 
-st.markdown('<p style="text-align: center; font-size: 0.8em; color: #555; margin-top: 20px;">⚠️ Educational use only. Consult a physician for medical advice.</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; font-size: 0.8em; color: #888; margin-top: 30px;">⚠️ Educational use only. Consult a physician for medical advice.</p>', unsafe_allow_html=True)
