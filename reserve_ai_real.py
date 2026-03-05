@@ -12,103 +12,73 @@ client = OpenAI(api_key=api_key)
 
 st.set_page_config(page_title="The Reserve Medical", page_icon="🩺", layout="centered")
 
-# --- CUSTOM CSS (Stabilized) ---
+# --- CUSTOM CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
 
-    /* Global Reset */
-    .stApp {
-        background-color: #FAF7F2 !important;
-        font-family: 'Inter', sans-serif !important;
-        color: #2C2C2C !important;
-    }
-    
-    /* Remove Sidebar & Decorations */
+    .stApp { background-color: #FAF7F2 !important; font-family: 'Inter', sans-serif !important; color: #2C2C2C !important; }
+
+    /* Remove Sidebar & Branding */
     section[data-testid="stSidebar"] { display: none; }
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
 
-    /* Centered Header */
-    h1 {
-        font-family: 'Cormorant Garamond', serif !important;
-        color: #1A1A1A !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 2px !important;
-        font-size: 2.2rem !important;
-        text-align: center !important;
-        margin-top: 20px !important;
-    }
-    
-    .subtitle {
-        font-family: 'Inter', sans-serif;
-        color: #666;
-        text-align: center;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 40px;
-    }
+    /* GLOBAL: Remove Avatars */
+    .stChatMessageAvatar { display: none !important; }
+    div[data-testid="stChatMessage"] > div:first-child { display: none !important; } /* Double Kill */
 
-    /* Message Container */
-    .stChatMessage {
+    /* GLOBAL: Message Alignment */
+    div[data-testid="stChatMessage"] {
+        padding: 0.5rem 0;
         background-color: transparent !important;
         border: none !important;
-        padding: 10px 0 !important;
+        width: 100%;
     }
 
-    /* Remove Avatars */
-    .stChatMessageAvatar { display: none !important; }
-
-    /* User Message (Right Aligned Bubble) */
+    /* USER (Right Aligned Bubble) */
     div[data-testid="stChatMessage"]:nth-child(odd) {
         flex-direction: row-reverse;
     }
-    div[data-testid="stChatMessage"]:nth-child(odd) > div:first-child {
+    div[data-testid="stChatMessage"]:nth-child(odd) .stMarkdown {
         background-color: #E8E0D4;
         color: #2C2C2C;
         padding: 12px 20px;
         border-radius: 20px 20px 0 20px;
         text-align: left;
         max-width: 80%;
-        margin-left: auto !important; /* Force Right */
+        margin-left: auto !important; /* Push to Right */
         margin-right: 0 !important;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        float: right; /* Force float */
+        clear: both;
     }
 
-    /* AI Message (Left Aligned Text) */
+    /* AI (Left Aligned Text) */
     div[data-testid="stChatMessage"]:nth-child(even) {
         flex-direction: row;
     }
-    div[data-testid="stChatMessage"]:nth-child(even) > div:first-child {
+    div[data-testid="stChatMessage"]:nth-child(even) .stMarkdown {
         background-color: transparent;
-        color: #2C2C2C;
         padding: 0;
         text-align: left;
         max-width: 90%;
-        margin-right: auto !important; /* Force Left */
+        margin-right: auto !important; /* Push to Left */
         margin-left: 0 !important;
+        float: left; /* Force float */
+        clear: both;
     }
 
-    /* Input Box (Floating Bottom) */
-    .stChatInput {
-        position: fixed;
-        bottom: 30px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        width: 100%;
-        max-width: 700px; /* Match layout width */
-        z-index: 1000;
+    /* HOME PAGE: Centered Input */
+    .hero-input input {
+        text-align: center;
+        border-radius: 30px;
+        padding: 15px;
+        border: 1px solid #ccc;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
     
-    .stChatInputContainer {
-        border-radius: 30px !important;
-        border: 1px solid #D0D0D0 !important;
-        background-color: white !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
-    }
+    /* CHAT PAGE: Bottom Input */
+    .stChatInput { bottom: 30px !important; }
 
 </style>
 """, unsafe_allow_html=True)
@@ -140,30 +110,39 @@ STRUCTURE:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- HEADER DISPLAY ---
-# Keep it simple: Always at the top. This prevents layout jumping.
-st.markdown("<h1>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>AI-Powered Clinical Intelligence</p>", unsafe_allow_html=True)
+# --- PAGE LOGIC ---
+if not st.session_state.messages:
+    # HERO MODE (Center)
+    st.markdown("<div style='height: 20vh;'></div>", unsafe_allow_html=True) # Spacer
+    st.markdown("<h1 style='text-align: center; font-family: Cormorant Garamond; font-size: 3rem; margin-bottom: 10px;'>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-family: Inter; color: #666; letter-spacing: 2px; text-transform: uppercase;'>AI-Powered Clinical Intelligence</p>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True) # Spacer
 
-# --- CHAT HISTORY ---
-# Create a container so messages don't get hidden behind the fixed input
-chat_container = st.container()
-with chat_container:
+    # CENTER INPUT
+    with st.form("hero_form"):
+        user_input = st.text_input("Describe your symptoms...", key="hero_input", label_visibility="collapsed")
+        submitted = st.form_submit_button("Consult", use_container_width=True)
+        
+        if submitted and user_input:
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            st.rerun()
+
+else:
+    # CHAT MODE (Top Header)
+    st.markdown("<h1 style='text-align: center; font-family: Cormorant Garamond; font-size: 1.5rem; margin-top: 10px; margin-bottom: 20px;'>THE RESERVE MEDICAL</h1>", unsafe_allow_html=True)
+    
+    # HISTORY
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
-    st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True) # Spacer
+            
+    # BOTTOM INPUT
+    if prompt := st.chat_input("Continue consultation..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.rerun()
 
-# --- INPUT AREA ---
-if prompt := st.chat_input("Consult The Reserve..."):
-    # User Message
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with chat_container:
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-    # AI Response
-    with chat_container:
+    # GENERATE RESPONSE (After Rerun)
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
             full_response = ""
